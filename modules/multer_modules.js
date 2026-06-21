@@ -1,37 +1,41 @@
-const { Storage } = require("@google-cloud/storage");
-const bucketName = "ecotup-production.appspot.com";
 const path = require("path");
-const keyFilePath = path.join("serviceaccount-key.json");
-const storage = new Storage({
-  projectId: "ecotup-production",
-  keyFilename: keyFilePath,
-});
-const bucket = storage.bucket(bucketName);
+const fs = require("fs");
 
-const uploadFileToStorage = (file, destination) => {
+const uploadToFilesystem = (file, destination) => {
+  const uploadDir = process.env.UPLOAD_DIR || "uploads";
+  const baseUrl = process.env.BASE_URL || "http://127.0.0.1:8000";
   return new Promise((resolve, reject) => {
-    const fileName = file.originalname;
+    const dir = path.join(uploadDir, destination);
+    fs.mkdirSync(dir, { recursive: true });
+    const fileName = `${Date.now()}-${file.originalname}`;
+    const filePath = path.join(dir, fileName);
+    fs.writeFile(filePath, file.buffer, (err) => {
+      if (err) return reject(`Error saving file: ${err}`);
+      resolve(`${baseUrl}/${uploadDir}/${destination}/${fileName}`);
+    });
+  });
+};
+
+const uploadToGCS = (file, destination) => {
+  const { Storage } = require("@google-cloud/storage");
+  const storage = new Storage({
+    projectId: process.env.GCS_PROJECT_ID,
+    keyFilename: process.env.GCS_KEY_FILE || "serviceaccount-key.json",
+  });
+  const bucket = storage.bucket(process.env.GCS_BUCKET);
+  return new Promise((resolve, reject) => {
+    const fileName = `${Date.now()}-${file.originalname}`;
     const fileUpload = bucket.file(`${destination}/${fileName}`);
-
-    const stream = fileUpload.createWriteStream({
-      metadata: {
-        contentType: file.mimetype,
-      },
-    });
-
-    stream.on("error", (error) => {
-      reject(`Error uploading file: ${error}`);
-    });
-
-    stream.on("finish", () => {
-      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileUpload.name}`;
-      resolve(publicUrl);
-    });
-
+    const stream = fileUpload.createWriteStream({ metadata: { contentType: file.mimetype } });
+    stream.on("error", (err) => reject(`Error uploading file: ${err}`));
+    stream.on("finish", () => resolve(`https://storage.googleapis.com/${bucket.name}/${fileUpload.name}`));
     stream.end(file.buffer);
   });
 };
 
-module.exports = {
-  uploadFileToStorage,
+const uploadFileToStorage = (file, destination) => {
+  if (process.env.STORAGE_TYPE === "gcs") return uploadToGCS(file, destination);
+  return uploadToFilesystem(file, destination);
 };
+
+module.exports = { uploadFileToStorage };

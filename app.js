@@ -1,6 +1,8 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const path = require("path");
 const app = express();
 const port = process.env.PORT || 8000;
 app.use(cors());
@@ -10,6 +12,7 @@ app.use(
       extended: true,
     }),
 );
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.get("/", (req, res) => {
   console.log("Response success");
   return res.send("Response Success!");

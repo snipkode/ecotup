@@ -6,3 +6,4 @@ seeds/
 .eslintrc.json
 settings.json
 serviceaccount-key.json
+uploads/

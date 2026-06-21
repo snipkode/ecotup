@@ -467,10 +467,7 @@ const uploadUserController = async (req, res) => {
     });
   }
   try {
-    await uploadFileToStorage(req.file, "User");
-    const url =
-      "https://storage.googleapis.com/ecotup-production.appspot.com/User/" +
-      req.file.originalname;
+    const url = await uploadFileToStorage(req.file, "User");
     const updateData = {
       user_profile: url,
       updated_at: db.fn.now(),
