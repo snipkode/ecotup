@@ -2,7 +2,6 @@ node_modules/
 migrations/
 seeds/
 .DS_Store
-README.md
 .env
 .eslintrc.json
 settings.json
