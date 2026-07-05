@@ -24,6 +24,7 @@ app.use("/api/reward", require("./routes/reward_routes"));
 app.use("/api/subscription", require("./routes/subscription_routes"));
 app.use("/api/transaction", require("./routes/transaction_routes"));
 app.use("/api/cluster", require("./routes/cluster_routes"));
+app.use("/api/ml", require("./routes/ml_routes"));
 
 app.listen(port, () => {
   console.log("Server is up and listening on http://127.0.0.1:" + port);
